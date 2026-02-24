@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blooket pastebin thing</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    textarea {
+      width: 100%;
+      height: 160px;
+      font-family: monospace;
+      padding: 0.8rem;
+    }
+
+    button {
+      margin: 1rem 0;
+      padding: 0.7rem 1.4rem;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    .infobox {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 6px;
+    }
+
+    .success {
+      background: #e6ffe6;
+      border: 1px solid #b3ffb3;
+    }
+
+    .error {
+      background: #ffe6e6;
+      border: 1px solid #ffb3b3;
+    }
+
+    .data {
+      background: #e6f2ff;
+      border: 1px solid #b3ddff;
+    }
+
+    .info {
+      background: #f8f8f8;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Upload text to Blooket</h1>
+
+  <label for="textInput">Your text:</label><br>
+  <textarea id="textInput" placeholder="Type or paste something here..."></textarea>
+
+  <br>
+
+  <button onclick="uploadText()">Upload to Blooket</button>
+
+  <div id="status" class="infobox"></div>
+  <div id="script" class="infobox"></div>
+
+  <script>
+    async function unicodeToBase64(str) {
+      const bytes = new TextEncoder().encode(str);
+      
+      // Native method available in modern browsers (Chrome 129+, Firefox 133+, Safari 18.2+)
+      if (Uint8Array.prototype.toBase64) {
+        return bytes.toBase64();
+      }
+
+      // Fallback for older browsers using a Blob (Async)
+      return await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.readAsDataURL(new Blob([bytes]));
+      });
+    }
+
+    async function uploadText() {
+      const status = document.getElementById("status");
+      status.textContent = "";
+      status.className = "";
+
+      const script = document.getElementById("script");
+      script.textContent = "";
+      script.className = "";
+
+      var text = document.getElementById("textInput").value.trim();
+      if (!text) {
+        showError(status, "Enter some text bruv");
+        return;
+      }
+
+      let filename = "upload.svg";
+
+      try {
+        text = `<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg width="1200" height="675" xmlns="http://www.w3.org/2000/svg">${await unicodeToBase64(text)}</svg>`
+        const blob = new Blob([text], { type: "text/plain" });
+
+        const formData = new FormData();
+        formData.append("file", blob, filename);
+        formData.append("upload_preset", "normal");
+
+        showStatus(status, `Uploading (${(blob.size / 1024).toFixed(1)} KB)...`);
+
+        const response = await fetch("https://api.cloudinary.com/v1_1/blooket/image/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error?.message || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const url = `${new URL(data.secure_url).origin}/${data.resource_type}/${data.type}/${data.public_id}${(data.format ? "." + data.format : "")}`;
+
+        showSuccess(status, `
+      Upload successful!
+
+      Public URL:
+      ${url}
+
+      Size: ${data.bytes} bytes
+      Created at: ${data.created_at}
+    `);
+
+        showData(script, `loadstring(loadstring(game:HttpGet("https://pastebin.com/raw/J50GKqxb"))("${url}"))()`);
+
+        console.log(data);
+
+      } catch (err) {
+        showError(status, `Upload failed:\n${err.message}`);
+        console.error(err);
+      }
+    }
+
+    function showStatus(el, msg) {
+      el.textContent = msg;
+      el.className = "";
+    }
+
+    function showSuccess(el, msg) {
+      el.innerHTML = `<pre class="info">${msg.trim()}</pre>`;
+      el.className = "infobox success";
+    }
+
+    function showError(el, msg) {
+      el.textContent = msg;
+      el.className = "infobox error";
+    }
+
+    function showData(el, msg) {
+      el.innerHTML = `<textarea class="info" readonly style="resize: none; box-sizing: border-box; padding: 5px;">${msg.trim()}</textarea>`;
+      el.className = "infobox data";
+    }
+  </script>
+
+</body>
+
+</html>
