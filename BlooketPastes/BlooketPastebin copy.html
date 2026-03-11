@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Text → Cloudinary Upload (Browser)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    textarea { width: 100%; height: 160px; font-family: monospace; padding: 0.8rem; }
+    button { margin: 1rem 0; padding: 0.7rem 1.4rem; font-size: 1.1rem; cursor: pointer; }
+    #status { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; }
+    .success { background: #e6ffe6; border: 1px solid #b3ffb3; }
+    .error   { background: #ffe6e6; border: 1px solid #ffb3b3; }
+    pre { background: #f8f8f8; padding: 1rem; border-radius: 6px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+
+<h1>Upload text as .txt to Cloudinary</h1>
+
+<p>Change these two constants ↓</p>
+
+<script>
+// ────────────────────────────────────────────────
+//   ←←←  CHANGE THESE TWO VALUES  ←←←
+// ────────────────────────────────────────────────
+const CLOUD_NAME    = 'blooket';               // your cloud name
+const UPLOAD_PRESET = 'normal';                // must be an UNSIGNED preset!
+// ────────────────────────────────────────────────
+
+const FORM_ACTION = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`;
+</script>
+
+<label for="textInput">Your text:</label><br>
+<textarea id="textInput" placeholder="Type or paste something here..."></textarea>
+
+<br>
+
+<label for="filename">Filename (optional):</label><br>
+<input type="text" id="filename" value="my-note.txt" placeholder="my-note.txt" style="width: 300px; padding: 0.6rem;">
+
+<br>
+
+<button onclick="uploadText()">Upload to Cloudinary</button>
+
+<div id="status"></div>
+
+<script>
+async function uploadText() {
+  const status = document.getElementById('status');
+  status.textContent = '';
+  status.className = '';
+
+  const text = document.getElementById('textInput').value.trim();
+  if (!text) {
+    showError(status, 'Please enter some text first.');
+    return;
+  }
+
+  let filename = document.getElementById('filename').value.trim();
+  if (!filename) filename = `note-${Date.now()}.txt`;
+  //if (!filename.toLowerCase().endsWith('.txt')) filename += '.txt';
+
+  try {
+    // 1. Create Blob (browser-native "file" in memory)
+    const blob = new Blob([text], { type: 'text/plain' });
+
+    // 2. Build FormData
+    const formData = new FormData();
+    formData.append('file', blob, filename);
+    formData.append('upload_preset', UPLOAD_PRESET);
+
+    // Optional: you can add more fields allowed by your preset
+    // formData.append('folder', 'notes/2026');
+    // formData.append('tags', 'text,notes,blooket');
+    // formData.append('context', 'caption|My cool note|subject|ideas');
+
+    showStatus(status, `Uploading ${filename} (${(blob.size / 1024).toFixed(1)} KB)...`);
+
+    // 3. Send request
+    const response = await fetch(FORM_ACTION, {
+      method: 'POST',
+      body: formData,
+      // Important: do NOT set Content-Type — browser adds correct multipart boundary
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error?.message || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    showSuccess(status, `
+      Upload successful!
+
+      Public URL:
+      ${data.secure_url}
+
+      Original filename: ${data.original_filename}
+      Format: ${data.format}
+      Size: ${data.bytes} bytes
+      Created at: ${data.created_at}
+    `);
+
+    // Optional: show clickable link
+    const link = document.createElement('a');
+    link.href = data.secure_url;
+    link.textContent = '→ Open uploaded file';
+    link.target = '_blank';
+    link.style.display = 'block';
+    link.style.marginTop = '1rem';
+    status.appendChild(link);
+
+    console.log('Full Cloudinary response:', data);
+
+  } catch (err) {
+    showError(status, `Upload failed:\n${err.message}`);
+    console.error(err);
+  }
+}
+
+function showStatus(el, msg) {
+  el.textContent = msg;
+  el.className = '';
+}
+
+function showSuccess(el, msg) {
+  el.innerHTML = `<pre>${msg.trim()}</pre>`;
+  el.className = 'success';
+}
+
+function showError(el, msg) {
+  el.textContent = msg;
+  el.className = 'error';
+}
+</script>
+
+</body>
+</html>
