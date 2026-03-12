@@ -225,13 +225,15 @@
             status.textContent = "";
             status.className = "";
             try {
-                originalName = file.name.split('.').slice(0, -1).join('.');
-                const originalExt = file.name.split('.').pop();
-                const selectedOutput = outputSelect.value;
                 if (!file) {
                     showError(status, "Please select a file first.");
                     return;
                 }
+
+                originalName = file.name.split('.').slice(0, -1).join('.');
+                const originalExt = file.name.split('.').pop();
+                const selectedOutput = outputSelect.value;
+
                 if (selectedOutput == "") {
                     showError(status, "Select an output file type.");
                     return;
