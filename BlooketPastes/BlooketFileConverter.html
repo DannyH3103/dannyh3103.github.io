@@ -81,7 +81,6 @@
             "heic",
             "heif",
             "jpg",
-            "m4v",
             "mp4",
             "pdf",
             "png",
@@ -197,6 +196,7 @@
         const status = document.getElementById("status");
         let file;
         let originalName;
+        let selectedOutput;
         let convertedFileBlob;
 
         async function selectFile() {
@@ -230,9 +230,9 @@
                     return;
                 }
 
+                selectedOutput = outputSelect.value;
                 originalName = file.name.split('.').slice(0, -1).join('.');
                 const originalExt = file.name.split('.').pop();
-                const selectedOutput = outputSelect.value;
 
                 if (selectedOutput == "") {
                     showError(status, "Select an output file type.");
@@ -274,7 +274,7 @@
 
                 showSuccess(status, `Successfully converted ${originalExt} to ${selectedOutput}.`);
 
-                downloadBlob(convertedFileBlob, originalName);
+                downloadBlob(convertedFileBlob, originalName + "." + selectedOutput);
 
                 const link = document.createElement("a");
                 link.href = "javascript:downloadCurrentFile()";
@@ -303,7 +303,7 @@
         }
 
         function downloadCurrentFile() {
-            downloadBlob(convertedFileBlob, originalName);
+            downloadBlob(convertedFileBlob, originalName + "." + selectedOutput);
         }
 
         function showStatus(el, msg) {
