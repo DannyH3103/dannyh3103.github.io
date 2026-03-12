@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Convert files using Blooket</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 160px;
+            font-family: monospace;
+            padding: 0.8rem;
+        }
+
+        button {
+            margin: 1rem 0;
+            padding: 0.7rem 1.4rem;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        #status {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 6px;
+        }
+
+        .success {
+            background: #e6ffe6;
+            border: 1px solid #b3ffb3;
+        }
+
+        .error {
+            background: #ffe6e6;
+            border: 1px solid #ffb3b3;
+        }
+
+        pre {
+            background: #f8f8f8;
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Convert files with Blooket</h1>
+
+    <span id="fileLabel">Your file:</span><br>
+    <button onclick="selectFile()">Select file</button>
+
+    <br>
+
+    <span>To</span>
+    <select id="outputSelection" style="min-width: 150px;">
+    </select>
+
+    <br>
+
+    <button onclick="uploadText()">Convert file</button>
+
+    <div id="status"></div>
+
+    <script>
+        const image = [
+            "ai",
+            "avif",
+            "bmp",
+            "eps",
+            "gif",
+            "heic",
+            "heif",
+            "jpg",
+            "m4v",
+            "mp4",
+            "pdf",
+            "png",
+            "ps",
+            "psb",
+            "psd",
+            "tga",
+            "tif",
+            "tiff",
+            "webm",
+            "webp"
+        ]
+        const video = [
+            "aac",
+            "ai",
+            "aif",
+            "aifc",
+            "aiff",
+            "avif",
+            "bmp",
+            "eps",
+            "flv",
+            "gif",
+            "heic",
+            "heif",
+            "jpg",
+            "m2ts",
+            "m4a",
+            "mkv",
+            "mov",
+            "mp3",
+            "mp4",
+            "ogg",
+            "ogv",
+            "opus",
+            "pdf",
+            "png",
+            "ps",
+            "psb",
+            "psd",
+            "tga",
+            "tif",
+            "tiff",
+            "wav",
+            "webm",
+            "webp"
+        ]
+        const audio = [
+            "aac",
+            "aif",
+            "aifc",
+            "aiff",
+            "flv",
+            "m2ts",
+            "m4a",
+            "mkv",
+            "mov",
+            "mp3",
+            "mp4",
+            "ogg",
+            "ogv",
+            "opus",
+            "wav",
+            "webm"
+        ]
+        
+        // Classification:
+        // image: png, no mp3
+        // video: png, mp3
+        // audio: no png, mp3
+        const conversions = {
+            aac: audio,
+            ai: image,
+            aif: audio,
+            aifc: null, // cant upload for some reason
+            aiff: audio,
+            avif: image,
+            bmp: image,
+            eps: image,
+            flv: video,
+            gif: image,
+            heic: image,
+            heif: image,
+            jpeg: image,
+            jpg: image,
+            m2ts: video,
+            m4a: audio,
+            m4v: video,
+            mkv: video,
+            mp4: video,
+            mp3: audio,
+            mp4: video,
+            ogg: audio,
+            ogv: video,
+            opus: audio,
+            pdf: image,
+            png: image,
+            ps: image,
+            psb: image,
+            psd: image,
+            tga: image,
+            tif: image,
+            tiff: image,
+            wav: audio,
+            webm: video,
+            webp: image,
+            svg: image,
+            ico: image
+        }
+
+        const outputSelect = document.getElementById("outputSelection");
+        const fileLabel = document.getElementById("fileLabel");
+        const status = document.getElementById("status");
+        let file;
+        let originalName;
+        let convertedFileBlob;
+
+        async function selectFile() {
+            try {
+                const [fileHandle] = await window.showOpenFilePicker();
+                file = await fileHandle.getFile();
+
+                const extension = file.name.split('.').pop();
+                const supportedOutputs = conversions[extension]
+
+                outputSelect.innerHTML = "";
+                if (supportedOutputs) {
+                    for (const outputExtension of supportedOutputs) {
+                        const option = document.createElement("option");
+                        option.innerText = outputExtension;
+                        outputSelect.appendChild(option);
+                    }
+                }
+
+                fileLabel.innerText = "Your file: " + file.name;
+            }
+            catch (a) { }
+        }
+
+        async function uploadText() {
+            status.textContent = "";
+            status.className = "";
+            try {
+                originalName = file.name.split('.').slice(0, -1).join('.');
+                const originalExt = file.name.split('.').pop();
+                const selectedOutput = outputSelect.value;
+                if (!file) {
+                    showError(status, "Please select a file first.");
+                    return;
+                }
+                if (selectedOutput == "") {
+                    showError(status, "Select an output file type.");
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("upload_preset", "normal");
+
+                showStatus(status, `Uploading file...`);
+ 
+                const response = await fetch("https://api.cloudinary.com/v1_1/blooket/upload", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error?.message || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                const url = `${new URL(data.secure_url).origin}/${data.resource_type}/${data.type}/${data.public_id}${"." + selectedOutput}`;
+
+                showStatus(status, "Converting file...");
+
+                const fileDownloadResponse = await fetch(url);
+
+                if (!fileDownloadResponse.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error?.message || `HTTP ${response.status}`);
+                }
+
+                showStatus(status, "Downloading file...");
+
+                convertedFileBlob = await fileDownloadResponse.blob();
+
+                showSuccess(status, `Successfully converted ${originalExt} to ${selectedOutput}.`);
+
+                downloadBlob(convertedFileBlob, originalName);
+
+                const link = document.createElement("a");
+                link.href = "javascript:downloadCurrentFile()";
+                link.textContent = "→ Download again";
+                link.style.display = "block";
+                link.style.marginTop = "1rem";
+                status.appendChild(link);
+
+                console.log(data);
+            }
+            catch (err) {
+                showError(status, `Conversion failed:\n${err.message}`);
+                console.error(err);
+            }
+        }
+
+        function downloadBlob(blob, name) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadCurrentFile() {
+            downloadBlob(convertedFileBlob, originalName);
+        }
+
+        function showStatus(el, msg) {
+            el.textContent = msg;
+            el.className = "";
+        }
+
+        function showSuccess(el, msg) {
+            el.innerHTML = `<pre>${msg.trim()}</pre>`;
+            el.className = "success";
+        }
+
+        function showError(el, msg) {
+            el.textContent = msg;
+            el.className = "error";
+        }
+    </script>
+
+</body>
+
+</html>

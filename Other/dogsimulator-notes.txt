@@ -1,0 +1,41 @@
+dispatcherv2({
+    service: "entity",
+    operation: "READ_BY_TYPE",
+    data: {
+        entityType: "playerKeys",
+    },
+}).then(response => console.log(response));
+
+dispatcherv2({
+    service: "playerStatistics",
+    operation: "READ",
+    data: null,
+}).then(response => console.log(response));
+
+dispatcherv2({
+    service: "playerState",
+    operation: "GET_ATTRIBUTES",
+    data: null,
+}).then(response => console.log(response));
+
+dispatcherv2({
+    service: "playerState",
+    operation: "UPDATE_ATTRIBUTES",
+    data: { attributes: { isHacker: "True" } },
+}).then(response => console.log(response));
+
+dispatcherv2({
+    service: "entity",
+    operation: "UPDATE",
+    data: {
+        entityId: "5b890a3a-6e31-4051-b4e0-40e78e0f18ca",
+        entityType: "playerKeys",
+        data: {
+            unlockAllLevels: false,
+            gold: 2731,
+            gems: 18,
+            lastMilestoneAchieved: 1,
+        },
+        version: -1,
+    },
+}).then(response => console.log(response));
