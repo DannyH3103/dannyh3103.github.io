@@ -200,6 +200,7 @@
         let originalName;
         let selectedOutput;
         let convertedFileBlob;
+        let conversion = 0;
 
         async function selectFile() {
             try {
@@ -224,6 +225,8 @@
         }
 
         async function uploadText() {
+            conversion++;
+            let currentConversion = conversion;
             status.textContent = "";
             status.className = "";
             try {
@@ -251,6 +254,7 @@
                     method: "POST",
                     body: formData,
                 });
+                if (conversion !== currentConversion) return;
 
                 if (!response.ok) {
                     const err = await response.json();
@@ -258,12 +262,14 @@
                 }
 
                 const data = await response.json();
+                if (conversion !== currentConversion) return;
 
                 const url = `${new URL(data.secure_url).origin}/${data.resource_type}/${data.type}/${data.public_id}.${selectedOutput}`;
 
                 showStatus(status, "Converting file...");
 
                 const fileDownloadResponse = await fetch(url);
+                if (conversion !== currentConversion) return;
 
                 if (!fileDownloadResponse.ok) {
                     const err = await response.json();
@@ -273,6 +279,7 @@
                 showStatus(status, "Downloading file...");
 
                 convertedFileBlob = await fileDownloadResponse.blob();
+                if (conversion !== currentConversion) return;
 
                 showSuccess(status, `Successfully converted ${originalExt} to ${selectedOutput}.`);
 
