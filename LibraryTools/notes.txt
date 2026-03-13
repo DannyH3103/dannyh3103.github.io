@@ -1,0 +1,4 @@
+These notes are for me so if youre not me then what are you doing here
+
+Need to use whitelisted library IP. Maybe any CENIC isp works? I need to find a non library wifi that uses CENIC. Maybe DVC college or UC Berkley or my local public middle school?
+
