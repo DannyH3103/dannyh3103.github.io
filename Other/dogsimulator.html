@@ -329,7 +329,7 @@
             });
             packetId++;
             
-            const response = await fetch("https://api.codetabs.com/v1/proxy?quest=https://sharedprod.braincloudservers.com/dispatcherv2?_=" + Date.now(), {
+            const response = await fetch("https://proxy.corsfix.com/?https://sharedprod.braincloudservers.com/dispatcherv2?_=" + Date.now(), {
                 method: "POST",
                 headers: {
                     "x-sig": signRequest(body)
