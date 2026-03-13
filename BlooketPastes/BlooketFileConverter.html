@@ -147,10 +147,12 @@
             "webm"
         ]
         
-        // Classification:
-        // image: png, no mp3
-        // video: png, mp3
-        // audio: no png, mp3
+        /*
+        Classification:
+        image: png, no mp3
+        video: png, mp3
+        audio: no png, mp3
+        */
         const conversions = {
             aac: audio,
             ai: image,
@@ -257,7 +259,7 @@
 
                 const data = await response.json();
 
-                const url = `${new URL(data.secure_url).origin}/${data.resource_type}/${data.type}/${data.public_id}${"." + selectedOutput}`;
+                const url = `${new URL(data.secure_url).origin}/${data.resource_type}/${data.type}/${data.public_id}.${selectedOutput}`;
 
                 showStatus(status, "Converting file...");
 
