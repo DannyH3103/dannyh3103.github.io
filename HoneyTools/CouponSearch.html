@@ -144,7 +144,7 @@
             params.set("operationName", operation);
             params.set("variables", JSON.stringify(data));
 
-            return await (await fetch("https://cors-anywhere.herokuapp.com/" + requestUrl.toString())).json();
+            return await (await fetch("https://corsproxy.io/?url=" + encodeURIComponent(requestUrl.toString()))).json();
         }
 
         function addCoupon({ code, desc }) {

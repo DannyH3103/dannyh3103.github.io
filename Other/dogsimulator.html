@@ -329,7 +329,7 @@
             });
             packetId++;
             
-            const response = await fetch("https://cors-anywhere.herokuapp.com/https://sharedprod.braincloudservers.com/dispatcherv2?_=" + Date.now(), {
+            const response = await fetch("https://corsproxy.io/?url=" + Date.now(), {
                 method: "POST",
                 headers: {
                     "x-sig": signRequest(body)
