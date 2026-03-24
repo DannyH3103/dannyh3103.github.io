@@ -482,6 +482,7 @@
     // ─── State ─────────────────────────────────────────────────────────────────
     let imageBase64 = null;
     let imageMimeType = null;
+    let originalFileName = null;
 
     // ─── Upload handlers ───────────────────────────────────────────────────────
     fileInput.addEventListener("change", e => {
@@ -507,10 +508,11 @@
 
     function processFile(file) {
       imageMimeType = file.type;
+      originalFileName = file.name.replace(/\.[^.]+$/, '');
       const reader = new FileReader();
       reader.onload = ev => {
         const dataUrl = ev.target.result;
-        imageBase64 = dataUrl.split(",")[1]; // base64 string, no prefix — ready to send to your proxy
+        imageBase64 = dataUrl.split(",")[1];
 
         // Show preview, hide dropzone
         previewImg.src = dataUrl;
@@ -518,7 +520,7 @@
         uploadZone.style.display = "none";
         resetLink.style.display = "block";
 
-        setStatus("", "Ready — hit Khameneify");
+        setStatus("", "Ready");
         runBtn.disabled = false;
       };
       reader.readAsDataURL(file);
@@ -573,6 +575,7 @@
       resultImg.style.display = "block";
       resultPlaceholder.style.display = "none";
       downloadBtn.href = imgSrc;
+      downloadBtn.download = `${originalFileName}-khameneified.png`;
       downloadBtn.style.display = "inline-block";
       setStatus("success", "Done");
     }
